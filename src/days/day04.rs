@@ -20,35 +20,36 @@ pub fn second_star() {
 }
 
 fn impl_first_star(contents: &str) -> usize {
-    let passports = parse_passports(&contents);
-
-    passports.iter().filter(|passport| is_valid_passport(passport)).count()
+    parse_passports(&contents)
+        .iter()
+        .filter(|passport| is_valid_passport(passport))
+        .count()
 }
 
 fn impl_second_star(contents: &str) -> usize {
-    let passports = parse_passports(&contents);
-
-    passports.iter().filter(|passport| is_valid_passport_and_fields(passport)).count()
+    parse_passports(&contents)
+        .iter()
+        .filter(|passport| is_valid_passport_and_fields(passport))
+        .count()
 }
 
 fn parse_passports(contents: &str) -> Vec<HashMap<String, String>> {
-    let mut passports = Vec::new();
-    passports.push(HashMap::new());
     contents
-        .lines()
-        .for_each(|line| {
-            if line.is_empty() {
-                passports.push(HashMap::new())
-            } else {
-                let passport = passports.last_mut().unwrap();
-                line.split(' ')
-                    .for_each(|field| {
-                        let pair = field.split(':').collect::<Vec<_>>();
-                        passport.insert(pair[0].to_string(), pair[1].to_string());
-                    });
-            }
-        });
-    passports
+        .split("\n\n")
+        .map(|group|
+            group
+                .lines()
+                .fold(HashMap::new(), |mut passport, line| {
+                    line.split_whitespace()
+                        .for_each(|field| {
+                            let mut pair = field.splitn(2,':');
+                            passport.insert(pair.next().unwrap().to_string(),
+                                            pair.next().unwrap().to_string());
+                        });
+                    passport
+                })
+        )
+        .collect::<Vec<_>>()
 }
 
 fn is_valid_passport(passport: &HashMap<String, String>) -> bool {
@@ -68,14 +69,16 @@ fn is_valid_passport_and_fields(passport: &HashMap<String, String>) -> bool {
         (byr.len() == 4 && byr >= "1920" && byr <= "2002") &&
         (iyr.len() == 4 && iyr >= "2010" && iyr <= "2020") &&
         (eyr.len() == 4 && eyr >= "2020" && eyr <= "2030") &&
-        if hgt[hgt.len()-2..] == *"cm" {
-            let val = hgt[..hgt.len()-2].parse::<usize>();
+        if let Some(h) = hgt.strip_suffix("cm") {
+            let val = h.parse::<usize>();
             if let Ok(v) = val { v >= 150 && v <= 193 } else { false }
-        } else if hgt[hgt.len()-2..] == *"in" {
-            let val = hgt[..hgt.len()-2].parse::<usize>();
+        } else if let Some(h) = hgt.strip_suffix("in") {
+            let val = h.parse::<usize>();
             if let Ok(v) = val { v >= 59 && v <= 76 } else { false }
         } else { false } &&
-        (hcl[0..1] == *"#" && hcl[1..].chars().all(|c| (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') )) &&
+        if let Some(h) = hcl.strip_prefix("#") {
+            h.chars().all(|c| c.is_ascii_hexdigit())
+        } else { false } &&
         ["amb", "blu", "brn", "gry", "grn", "hzl", "oth"].contains(&ecl) &&
         (pid.len() == 9 && pid.parse::<usize>().is_ok())
     } else {
