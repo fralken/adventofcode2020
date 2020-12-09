@@ -85,7 +85,7 @@ fn impl_second_star(contents: &str) -> Option<i32> {
 fn parse_code(contents: &str) -> Vec<Instr> {
     contents
         .lines()
-        .map(|line| Instr::from(line))
+        .map(Instr::from)
         .collect()
 }
 

@@ -22,7 +22,7 @@ pub fn second_star() {
 fn impl_first_star(contents: &str) -> usize {
     contents
         .lines()
-        .map(|s| parse(s))
+        .map(parse)
         .filter(|p| {
             let count = p.3.chars().filter(|c| c == &p.2).count();
             count >= p.0 && count <= p.1
@@ -33,7 +33,7 @@ fn impl_first_star(contents: &str) -> usize {
 fn impl_second_star(contents: &str) -> usize {
     contents
         .lines()
-        .map(|s| parse(s))
+        .map(parse)
         .filter(|p|
             (p.3.chars().nth(p.0 - 1) == Some(p.2)) !=
                 (p.3.chars().nth(p.1 - 1) == Some(p.2))
