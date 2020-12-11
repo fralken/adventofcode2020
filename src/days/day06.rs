@@ -27,8 +27,8 @@ fn impl_second_star(contents: &str) -> usize {
     count_questions(contents, |a, b| a & b)
 }
 
-fn count_questions(contents: &str,
-                   op: impl Fn(&HashSet<char>, &HashSet<char>) -> HashSet<char>) -> usize {
+fn count_questions<F>(contents: &str, op: F) -> usize
+    where F: Fn(&HashSet<char>, &HashSet<char>) -> HashSet<char> {
     contents
         .split("\n\n")
         .map(|group|
