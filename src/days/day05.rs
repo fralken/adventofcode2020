@@ -24,7 +24,7 @@ fn impl_first_star(contents: &str) -> usize {
 
 fn impl_second_star(contents: &str) -> Option<usize> {
     let mut boarding_passes = parse_boarding_passes(contents);
-    boarding_passes.sort();
+    boarding_passes.sort_unstable();
     for i in 0..boarding_passes.len()-1 {
         if boarding_passes[i+1] - boarding_passes[i] == 2 {
             return Some(boarding_passes[i] + 1)

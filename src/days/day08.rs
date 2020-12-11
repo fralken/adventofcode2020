@@ -53,31 +53,17 @@ fn impl_first_star(contents: &str) -> i32 {
 
 fn impl_second_star(contents: &str) -> Option<i32> {
     let instructions = parse_code(contents);
-    let mut last_fixed= 0;
-    while last_fixed < instructions.len() {
+    for i in 0..instructions.len() {
         let mut fixed_instr = instructions.clone();
-        if let Some(fix) = fixed_instr
-            .iter()
-            .skip(last_fixed)
-            .position(|i|
-                match *i {
-                    Instr::Acc(_) => false,
-                    Instr::Jmp(_) => true,
-                    Instr::Nop(_) => true
-                }
-            ) {
-            last_fixed += fix;
-            fixed_instr[last_fixed] = match fixed_instr[last_fixed] {
-                Instr::Jmp(value) => Instr::Nop(value),
-                Instr::Nop(value) => Instr::Jmp(value),
-                _ => unreachable!()
-            };
-            let (acc, status) = compute(&fixed_instr);
-            if status == Status::End {
-                return Some(acc)
-            }
+        match instructions[i] {
+            Instr::Acc(_) => continue,
+            Instr::Jmp(value) => fixed_instr[i] = Instr::Nop(value),
+            Instr::Nop(value) => fixed_instr[i] = Instr::Jmp(value)
         }
-        last_fixed += 1;
+        let (acc, status) = compute(&fixed_instr);
+        if status == Status::End {
+            return Some(acc)
+        }
     }
     None
 }
@@ -94,8 +80,7 @@ fn compute(instructions: &[Instr]) -> (i32, Status) {
     let mut pos: i32 = 0;
     let last = instructions.len() as i32;
     let mut executed = HashSet::new();
-    while pos >= 0 && pos < last && !executed.contains(&pos) {
-        executed.insert(pos);
+    while pos >= 0 && pos < last && executed.insert(pos) {
         match instructions[pos as usize] {
             Instr::Acc(value) => { acc += value; pos += 1; },
             Instr::Jmp(value) => pos += value,

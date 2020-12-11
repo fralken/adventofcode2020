@@ -26,18 +26,23 @@ fn impl_first_star(contents: &str, batch: usize) -> usize {
 fn impl_second_star(contents: &str, batch: usize) -> Option<usize> {
     let codes = parse(contents);
     let invalid = first_invalid_code(&codes, batch);
-    for i in 0..codes.len() {
-        let mut acc = codes[i];
-        let mut j = i + 1;
-        while acc < invalid && codes[j] != invalid && j < codes.len() {
-            acc += codes[j];
-            if acc == invalid {
-                let set = &codes[i..=j];
+    let sums = [0 as usize]
+        .iter()
+        .chain(codes.iter())
+        .scan(0, |sum, c| {
+            *sum += c;
+            Some(*sum)
+        })
+        .collect::<Vec<usize>>();
+    for i in 0..sums.len() {
+        let j = sums.binary_search(&(sums[i] + invalid));
+        if let Ok(j) = j {
+            if j > i + 1 {
+                let set = &codes[i..j];
                 let min = set.iter().min().unwrap();
                 let max = set.iter().max().unwrap();
                 return Some(min + max)
             }
-            j += 1;
         }
     }
     None
