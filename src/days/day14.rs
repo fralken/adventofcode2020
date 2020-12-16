@@ -76,10 +76,10 @@ fn mask_address(mem: &mut HashMap<u64, u64>, mask: &str, mut address: u64, value
 
     for m in 0..1<<floating.len() {
         let mut new_address = address;
-        for i in 0..floating.len() {
+        for (i, f) in floating.iter().enumerate() {
             match m >> i & 1 {
-                0 => new_address &= !floating[i],
-                1 => new_address |= floating[i],
+                0 => new_address &= !f,
+                1 => new_address |= f,
                 _ => unreachable!()
             }
         }

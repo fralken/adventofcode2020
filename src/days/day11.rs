@@ -68,6 +68,7 @@ fn step<F>(prev: &[Vec<char>], counter: F) -> (Vec<Vec<char>>, bool)
     (next, changed)
 }
 
+#[allow(clippy::needless_range_loop)]
 fn count_adjacent(room: &[Vec<char>], x: usize, y: usize) -> char {
     let height = room.len()-2;
     let width = room[0].len()-2;
