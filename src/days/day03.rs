@@ -6,7 +6,7 @@ pub fn first_star() {
 
     let trees = impl_first_star(&contents, 3, 1);
 
-    println!("day  3.1 - number of trees for slop right 3 down 1: {}", trees);
+    println!("day  3.1 - number of trees for slope right 3 down 1: {}", trees);
 }
 
 pub fn second_star() {
