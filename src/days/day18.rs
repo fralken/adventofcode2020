@@ -39,8 +39,8 @@ fn compute(contents: &str, precedence: bool) -> isize {
 fn parse_expressions(contents: &str) -> Vec<Vec<String>> {
     contents.lines()
         .map(|line|  {
-            let mut str = str::replace(line,"(", " ( ");
-            str = str::replace(&str,")", " ) ");
+            let str = str::replace(line,"(", " ( ");
+            let str = str::replace(&str,")", " ) ");
             str.split_whitespace().map(|s| s.to_string()).collect()
         })
         .collect()
