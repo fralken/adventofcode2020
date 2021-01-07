@@ -26,8 +26,8 @@ fn main() {
         [day20::first_star, day20::second_star],
         [day21::first_star, day21::second_star],
         [day22::first_star, day22::second_star],
-        [day23::first_star, day23::second_star]/*,
-        [day24::first_star, day24::second_star],
+        [day23::first_star, day23::second_star],
+        [day24::first_star, day24::second_star]/*,
         [day25::first_star, day25::second_star]*/
     ];
 
