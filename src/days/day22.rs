@@ -14,9 +14,9 @@ pub fn second_star() {
     let contents = fs::read_to_string("./input/day22.txt")
         .expect("Something went wrong reading the file");
 
-    let res = impl_second_star(&contents);
+    let score = impl_second_star(&contents);
 
-    println!("day 22.2 - winning player's score (recursive game): {}", res);
+    println!("day 22.2 - winning player's score (recursive game): {}", score);
 }
 
 fn impl_first_star(contents: &str) -> usize {

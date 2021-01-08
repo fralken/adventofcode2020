@@ -1,164 +1,90 @@
 use std::fs;
 
-trait Cubes<P> {
-    fn new(data: Vec<isize>, size: P) -> Self;
+struct Cubes {
+    size: Vec<isize>,
+    data: Vec<isize>
+}
 
-    fn is_valid(&self, pos: &P) -> bool;
+impl Cubes {
+    fn new(data: Vec<isize>, size: Vec<isize>) -> Self {
+        Self { size, data }
+    }
 
-    fn index(&self, pos: &P) -> usize;
+    fn is_valid(&self, pos: &[isize]) -> bool {
+        self.size.iter()
+            .zip(pos.iter())
+            .all(|(&s, p)| (0..s).contains(p))
+    }
 
-    fn get_cube(&self, pos: &P) -> isize {
+    fn index(&self, pos: &[isize]) -> usize {
+        fn ind(s: &[isize], p: &[isize]) -> isize {
+            if p.is_empty() { 0 } else { p[0] + s[0] * ind(&s[1..], &p[1..]) }
+        }
+        ind(&self.size, pos) as usize
+    }
+
+    fn get_cube(&self, pos: &[isize]) -> isize {
         if self.is_valid(&pos) {
-            let index = self.index(&pos);
-            self.data()[index]
+            let index = self.index(pos);
+            self.data[index]
         } else {
             0
         }
     }
 
-    fn set_cube(&mut self, pos: &P, cube: isize) {
-        let index = self.index(&pos);
-        self.data_mut()[index] = cube;
+    fn set_cube(&mut self, pos: &[isize], cube: isize) {
+        let index = self.index(pos);
+        self.data[index] = cube;
     }
 
-    fn count_neighbours(&self, center: &P) -> isize;
+    fn count_neighbours(&self, center: &[isize]) -> isize {
+        fn cn(cube: &Cubes, dim: &[isize], c: &[isize]) -> isize {
+            if dim.len() == c.len() {
+                let pos = c.iter().zip(dim.iter()).map(|(c, d)| c + d).collect::<Vec<_>>();
+                if dim.iter().any(|&d| d != 0) && cube.is_valid(&pos) {
+                    cube.get_cube(&pos)
+                } else {
+                    0
+                }
+            } else {
+                let mut count = 0;
+                for i in -1..=1 {
+                    count += cn(cube, &[&dim, &[i as isize][..]].concat(), c);
+                }
+                count
+            }
+        }
+        cn(self, &[], center)
+    }
 
-    fn evolve(&self, center: &P) -> isize {
+    fn evolve(&self, center: &[isize]) -> isize {
         let cube = self.get_cube(&center);
         let count = self.count_neighbours(&center);
         if count == 3 || (count == 2 && cube == 1) { 1 } else { 0 }
     }
 
-    fn cycle(&mut self);
+    fn cycle(&mut self) {
+        fn c(next: &mut Cubes, cube: &Cubes, dim: &[isize]) {
+            if dim.len() == cube.size.len() {
+                let next_cube = cube.evolve(&dim.iter().map(|d| d - 1).collect::<Vec<_>>());
+                next.set_cube(dim, next_cube);
+            } else {
+                for i in 0..next.size[dim.len()] {
+                    c(next, cube, &[&dim, &[i][..]].concat())
+                }
+            }
+        }
+        let next_size = self.size.iter().map(|s| s + 2).collect::<Vec<_>>();
+        let new_data = vec![0; next_size.iter().product::<isize>() as usize];
+        let mut next = Cubes::new(new_data, next_size);
+        c(&mut next, self, &[]);
+        self.size = next.size;
+        self.data = next.data;
+    }
 
     fn count_active(&self) -> isize {
-        self.data().iter().sum()
+        self.data.iter().sum()
     }
-
-    fn data(&self) -> &Vec<isize>;
-
-    fn data_mut(&mut self) -> &mut Vec<isize>;
-}
-
-type Pos3 = (isize, isize, isize);
-
-struct Cubes3 {
-    size: Pos3,
-    data: Vec<isize>
-}
-
-impl Cubes<Pos3> for Cubes3 {
-    fn new(data: Vec<isize>, size: Pos3) -> Self {
-        Self { size, data }
-    }
-
-    fn is_valid(&self, pos: &Pos3) -> bool {
-        (0..self.size.0).contains(&pos.0) &&
-            (0..self.size.1).contains(&pos.1) &&
-            (0..self.size.2).contains(&pos.2)
-    }
-
-    fn index(&self, pos: &Pos3) -> usize {
-        (pos.0 + self.size.0 * (pos.1 + self.size.1 * pos.2)) as usize
-    }
-
-    fn count_neighbours(&self, center: &Pos3) -> isize {
-        let mut count = 0;
-        for i in -1..=1 {
-            for j in -1..=1 {
-                for k in -1..=1 {
-                    let pos = (center.0 + i, center.1 + j, center.2 + k);
-                    if (i, j, k) != (0, 0, 0) && self.is_valid(&pos) {
-                        count += self.get_cube(&pos)
-                    }
-                }
-            }
-        }
-        count
-    }
-
-    fn cycle(&mut self) {
-        let next_size = (self.size.0 + 2, self.size.1 + 2, self.size.2 + 2);
-        let new_data = vec![0; (next_size.0 * next_size.1 * next_size.2) as usize];
-        let mut next = Cubes3::new(new_data, next_size);
-        for i in 0..next.size.0 {
-            for j in 0..next.size.1 {
-                for k in 0..next.size.2 {
-                    let next_cube = self.evolve(&(i - 1, j - 1, k - 1));
-                    next.set_cube(&(i, j, k), next_cube);
-                }
-            }
-        }
-        self.size = next.size;
-        self.data = next.data;
-    }
-
-    fn data(&self) -> &Vec<isize> { &self.data }
-
-    fn data_mut(&mut self) -> &mut Vec<isize> { &mut self.data }
-}
-
-type Pos4 = (isize, isize, isize, isize);
-
-struct Cubes4 {
-    size: Pos4,
-    data: Vec<isize>
-}
-
-impl Cubes<Pos4> for Cubes4 {
-    fn new(data: Vec<isize>, size: Pos4) -> Self {
-        Self { size, data }
-    }
-
-    fn is_valid(&self, pos: &Pos4) -> bool {
-        (0..self.size.0).contains(&pos.0) &&
-            (0..self.size.1).contains(&pos.1) &&
-            (0..self.size.2).contains(&pos.2) &&
-            (0..self.size.3).contains(&pos.3)
-    }
-
-    fn index(&self, pos: &Pos4) -> usize {
-        (pos.0 + self.size.0 * (pos.1 + self.size.1 * (pos.2 + self.size.2 * pos.3))) as usize
-    }
-
-    fn count_neighbours(&self, center: &Pos4) -> isize {
-        let mut count = 0;
-        for i in -1..=1 {
-            for j in -1..=1 {
-                for k in -1..=1 {
-                    for l in -1..=1 {
-                        let pos = (center.0 + i, center.1 + j, center.2 + k, center.3 + l);
-                        if (i, j, k, l) != (0, 0, 0, 0) && self.is_valid(&pos) {
-                            count += self.get_cube(&pos)
-                        }
-                    }
-                }
-            }
-        }
-        count
-    }
-
-    fn cycle(&mut self) {
-        let next_size = (self.size.0 + 2, self.size.1 + 2, self.size.2 + 2, self.size.3 + 2);
-        let new_data = vec![0; (next_size.0 * next_size.1 * next_size.2 * next_size.3) as usize];
-        let mut next = Cubes4::new(new_data, next_size);
-        for i in 0..next.size.0 {
-            for j in 0..next.size.1 {
-                for k in 0..next.size.2 {
-                    for l in 0..next.size.3 {
-                        let next_cube = self.evolve(&(i - 1, j - 1, k - 1, l - 1));
-                        next.set_cube(&(i, j, k, l), next_cube);
-                    }
-                }
-            }
-        }
-        self.size = next.size;
-        self.data = next.data;
-    }
-
-    fn data(&self) -> &Vec<isize> { &self.data }
-
-    fn data_mut(&mut self) -> &mut Vec<isize> { &mut self.data }
 }
 
 pub fn first_star() {
@@ -181,17 +107,16 @@ pub fn second_star() {
 
 fn impl_first_star(contents: &str) -> isize {
     let (data, width, height) = parse_cubes(contents);
-    let cubes = Cubes3::new(data, (width, height, 1));
-    run_cycles(cubes)
+    run_cycles(data, vec![width, height, 1])
 }
 
 fn impl_second_star(contents: &str) -> isize {
     let (data, width, height) = parse_cubes(contents);
-    let cubes = Cubes4::new(data, (width, height, 1, 1));
-    run_cycles(cubes)
+    run_cycles(data, vec![width, height, 1, 1])
 }
 
-fn run_cycles<P, C>(mut cubes: C) -> isize where C: Cubes<P> {
+fn run_cycles(data: Vec<isize>, size: Vec<isize>) -> isize {
+    let mut cubes = Cubes::new(data, size);
     for _ in 0..6 {
         cubes.cycle();
     }
